@@ -73,3 +73,8 @@ def test_multi_choice_keeps_definition_order_and_drops_duplicates():
 def test_unknown_type_name_is_a_validation_error():
     with pytest.raises(ValidationError):
         get_field_type("colour")
+
+
+def test_boolean_displays_capitalised():
+    assert get_field_type("boolean").to_display(["yes"]) == "Yes"
+    assert get_field_type("boolean").to_display([]) == ""

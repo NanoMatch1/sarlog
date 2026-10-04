@@ -144,6 +144,9 @@ class BooleanFieldType(FieldType):
             return "no"
         raise ValidationError(f"'{spec.label}' must be yes or no, got {value!r}")
 
+    def to_display(self, stored_values: list[str]) -> str:
+        return ", ".join(value.capitalize() for value in stored_values)
+
 
 @register_field_type("choice", "Pick one from a list")
 class ChoiceFieldType(FieldType):

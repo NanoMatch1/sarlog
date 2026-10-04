@@ -3,6 +3,9 @@
 Each release has a section headed `## vX.Y.Z`. The Updates page in the app
 shows these notes to the user, so write them for the person entering data.
 
+## v0.2.1 — 2026-10-04
+- Yes/No details now show as "Yes" and "No" on job pages.
+
 ## v0.2.0 — 2026-10-04
 - New **Updates** page (top right of the menu). SAR Log checks for a newer
   version when it starts; one click downloads it, and "Restart now" finishes
