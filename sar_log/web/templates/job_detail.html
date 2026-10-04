@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_value %}
+{% block title %}Job {{ job.event_number }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Job {{ job.event_number }} <span class="muted">· {{ job.start_date }}</span></h1>
+  <a class="button" href="{{ url_for('jobs.edit_job_page', job_id=job.id) }}">Edit details</a>
+</div>
+{% if job.name %}<p><strong>{{ job.name }}</strong></p>{% endif %}
+
+<div class="stats">
+  <div class="stat"><div class="value">{{ totals.person_hours | round(1) }}</div><div class="label">Person hours</div></div>
+  <div class="stat"><div class="value">{{ totals.staff_count }}</div><div class="label">Total staff</div></div>
+  {% for organisation, hours in totals.hours_by_organisation.items() %}
+    <div class="stat"><div class="value">{{ hours | round(1) }}</div><div class="label">hours · {{ organisation }}</div></div>
+  {% endfor %}
+</div>
+
+<div class="grid-2">
+  {% for section, definitions in sections.items() %}
+    <div class="card">
+      <h3>{{ section }}</h3>
+      <dl class="details">
+        {% for definition in definitions %}
+          <dt>{{ definition.label }}{% if definition.is_archived %} <span class="muted small">(archived)</span>{% endif %}</dt>
+          <dd>{{ field_value(job, definition) or '—' }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h3>Notes</h3>
+  <p style="white-space: pre-wrap">{{ job.notes or '—' }}</p>
+</div>
+
+<h2 id="attendance">People and hours</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>Person</th><th>Organisation</th><th>Role</th><th class="number">Hours</th><th class="no-print"></th></tr></thead>
+  <tbody>
+    {% for record in attendance %}
+      <tr>
+        <td><a href="{{ url_for('people.person_detail_page', person_id=record.person_id) }}">{{ record.person_name }}</a></td>
+        <td>{{ record.organisation_name or '—' }}</td>
+        <td>{{ record.role }}</td>
+        <td class="number">{{ record.hours }}</td>
+        <td class="no-print">
+          <form method="post" action="{{ url_for('jobs.remove_attendance_page', job_id=job.id, attendance_id=record.id) }}">
+            <button class="link" type="submit">remove</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No one recorded yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+
+<form class="filters card no-print" method="post" action="{{ url_for('jobs.set_attendance_page', job_id=job.id) }}" style="margin-top: 12px">
+  <label>Person
+    <select name="person_id" required>
+      <option value="">— choose —</option>
+      {% for person in available_people %}
+        <option value="{{ person.id }}">{{ person.full_name }}{% if person.organisation_name %} ({{ person.organisation_name }}){% endif %}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Hours <input type="number" name="hours" step="any" min="0" required style="width: 7em"></label>
+  <label>Role (optional) <input type="text" name="role" placeholder="e.g. field team, IMT"></label>
+  <button type="submit">Add</button>
+  <span class="muted small">To change someone's hours, remove and re-add them. Not listed? <a href="{{ url_for('people.new_person_page') }}">Add a person</a>.</span>
+</form>
+
+<details class="no-print" style="margin-top: 30px">
+  <summary class="muted">Delete this job</summary>
+  <form method="post" action="{{ url_for('jobs.delete_job_page', job_id=job.id) }}" class="filters" style="margin-top: 8px">
+    <label>Type the event number to confirm <input type="text" name="confirm_event_number"></label>
+    <button class="danger" type="submit">Delete job</button>
+  </form>
+</details>
+{% endblock %}

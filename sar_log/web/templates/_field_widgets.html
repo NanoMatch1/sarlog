@@ -1,0 +1,57 @@
+{# One macro per widget name declared on the field types in sar_log/field_types.py.
+   Every macro takes (definition, values, prefix) where values is a list of strings. #}
+
+{% macro label_for(definition) -%}
+  <label for="{{ definition.key }}">{{ definition.label }}{% if definition.is_required %} *{% endif %}
+    {% if definition.description %}<span class="help">— {{ definition.description }}</span>{% endif %}</label>
+{%- endmacro %}
+
+{% macro text_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  <input type="text" id="{{ definition.key }}" name="{{ prefix }}{{ definition.key }}" value="{{ values[0] if values else '' }}">
+{%- endmacro %}
+
+{% macro textarea_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  <textarea id="{{ definition.key }}" name="{{ prefix }}{{ definition.key }}">{{ values[0] if values else '' }}</textarea>
+{%- endmacro %}
+
+{% macro number_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  <input type="number" step="{{ '1' if definition.value_type == 'integer' else 'any' }}" id="{{ definition.key }}" name="{{ prefix }}{{ definition.key }}" value="{{ values[0] if values else '' }}">
+{%- endmacro %}
+
+{% macro date_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  <input type="date" id="{{ definition.key }}" name="{{ prefix }}{{ definition.key }}" value="{{ values[0] if values else '' }}">
+{%- endmacro %}
+
+{% macro boolean_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  {% set current = values[0] if values else '' %}
+  <select id="{{ definition.key }}" name="{{ prefix }}{{ definition.key }}">
+    <option value="" {{ 'selected' if current == '' }}>— not recorded —</option>
+    <option value="yes" {{ 'selected' if current == 'yes' }}>Yes</option>
+    <option value="no" {{ 'selected' if current == 'no' }}>No</option>
+  </select>
+{%- endmacro %}
+
+{% macro choice_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  {% set current = values[0] if values else '' %}
+  <select id="{{ definition.key }}" name="{{ prefix }}{{ definition.key }}">
+    <option value="">— choose —</option>
+    {% for choice in definition.choices %}
+      <option value="{{ choice }}" {{ 'selected' if current == choice }}>{{ choice }}</option>
+    {% endfor %}
+  </select>
+{%- endmacro %}
+
+{% macro multi_choice_input(definition, values, prefix) -%}
+  {{ label_for(definition) }}
+  <div class="checkbox-grid" id="{{ definition.key }}">
+    {% for choice in definition.choices %}
+      <label><input type="checkbox" name="{{ prefix }}{{ definition.key }}" value="{{ choice }}" {{ 'checked' if choice in values }}> {{ choice }}</label>
+    {% endfor %}
+  </div>
+{%- endmacro %}

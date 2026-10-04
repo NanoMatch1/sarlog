@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Export data{% endblock %}
+{% block content %}
+<h1>Export data</h1>
+<p class="muted">CSV files open directly in Excel. They contain personal details — keep them on this machine.</p>
+<ul>
+  {% for name in export_names %}
+    <li><a href="{{ url_for('reports.download_export', export_name=name) }}">{{ name | capitalize }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

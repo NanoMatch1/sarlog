@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_value %}
+{% block title %}Jobs{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Jobs</h1>
+  <a class="button" href="{{ url_for('jobs.new_job_page') }}">+ New job</a>
+</div>
+
+<form class="filters card no-print" method="get">
+  <label>From <input type="date" name="start_date" value="{{ job_filter.start_date or '' }}"></label>
+  <label>To <input type="date" name="end_date" value="{{ job_filter.end_date or '' }}"></label>
+  <label>Search <input type="text" name="text" value="{{ job_filter.text }}" placeholder="event no., name, notes, any value"></label>
+  {% for definition in filterable_fields %}
+    <label>{{ definition.label }}
+      <select name="filter__{{ definition.key }}">
+        <option value="">any</option>
+        {% for choice in (definition.choices if definition.choices else ['yes', 'no']) %}
+          <option value="{{ choice }}" {{ 'selected' if job_filter.field_equals.get(definition.key) == choice }}>{{ choice }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  {% endfor %}
+  <button type="submit">Filter</button>
+  <a href="{{ url_for('jobs.list_jobs_page') }}">Clear</a>
+</form>
+
+<p class="muted">{{ jobs | length }} job{{ '' if jobs | length == 1 else 's' }} ·
+  {{ totals.values() | sum(attribute='person_hours') | round(1) }} person hours</p>
+
+<div class="table-wrap"><table>
+  <thead><tr>
+    <th>Date</th><th>Event no.</th><th>Name</th>
+    {% for definition in summary_fields %}<th>{{ definition.label }}</th>{% endfor %}
+    <th class="number">Staff</th><th class="number">Person hours</th>
+  </tr></thead>
+  <tbody>
+  {% for job in jobs %}
+    <tr>
+      <td>{{ job.start_date }}</td>
+      <td><a href="{{ url_for('jobs.job_detail_page', job_id=job.id) }}">{{ job.event_number }}</a></td>
+      <td>{{ job.name }}</td>
+      {% for definition in summary_fields %}<td>{{ field_value(job, definition) }}</td>{% endfor %}
+      <td class="number">{{ totals[job.id].staff_count }}</td>
+      <td class="number">{{ totals[job.id].person_hours | round(1) }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="{{ 5 + summary_fields | length }}" class="muted">No jobs match.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

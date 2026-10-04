@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Organisations{% endblock %}
+{% block content %}
+<h1>Organisations</h1>
+<p class="muted">Person hours on each job are split by these. Include your own group, neighbouring groups, Police, Coastguard and so on.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Notes</th><th></th></tr></thead>
+  <tbody>
+    {% for organisation in organisations %}
+      <tr>
+        <td><input form="row-form-{{ organisation.id }}" type="text" name="name" value="{{ organisation.name }}"></td>
+        <td><input form="row-form-{{ organisation.id }}" type="text" name="notes" value="{{ organisation.notes }}" style="width: 100%"></td>
+        <td><form id="row-form-{{ organisation.id }}" method="post"><input form="row-form-{{ organisation.id }}" type="hidden" name="organisation_id" value="{{ organisation.id }}"></form><button form="row-form-{{ organisation.id }}" class="secondary" type="submit">Save</button></td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td><input form="row-form-new" type="text" name="name" placeholder="New organisation"></td>
+      <td><input form="row-form-new" type="text" name="notes" placeholder="Notes" style="width: 100%"></td>
+      <td><form id="row-form-new" method="post"></form><button form="row-form-new" type="submit">Add</button></td>
+    </tr>
+  </tbody>
+</table></div>
+{% endblock %}

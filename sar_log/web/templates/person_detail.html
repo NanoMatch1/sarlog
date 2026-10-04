@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ person.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ person.full_name }}</h1>
+  <a class="button" href="{{ url_for('people.edit_person_page', person_id=person.id) }}">Edit</a>
+</div>
+<div class="card">
+  <dl class="details">
+    <dt>SAR ID</dt><dd>{{ person.sar_id or '—' }}</dd>
+    <dt>Organisation</dt><dd>{{ person.organisation_name or '—' }}</dd>
+    <dt>Joined</dt><dd>{{ person.joined_date or '—' }}</dd>
+    <dt>Left</dt><dd>{{ person.left_date or '—' }}</dd>
+    <dt>Email</dt><dd>{{ person.email or '—' }}</dd>
+    <dt>Phone</dt><dd>{{ person.phone or '—' }}</dd>
+    <dt>Comments</dt><dd>{{ person.comments or '—' }}</dd>
+  </dl>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="value">{{ job_history | length }}</div><div class="label">Jobs</div></div>
+  <div class="stat"><div class="value">{{ total_hours | round(1) }}</div><div class="label">Person hours</div></div>
+  <div class="stat"><div class="value">{{ training_sessions | length }}</div><div class="label">Training sessions</div></div>
+</div>
+
+<div class="grid-2">
+  <div>
+    <h2>Jobs</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Event no.</th><th>Role</th><th class="number">Hours</th></tr></thead>
+      <tbody>
+        {% for job, record in job_history | sort(attribute='0.start_date', reverse=true) %}
+          <tr><td>{{ job.start_date }}</td>
+            <td><a href="{{ url_for('jobs.job_detail_page', job_id=job.id) }}">{{ job.event_number }}</a></td>
+            <td>{{ record.role }}</td><td class="number">{{ record.hours }}</td></tr>
+        {% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div>
+    <h2>Training</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Training</th></tr></thead>
+      <tbody>
+        {% for session in training_sessions %}
+          <tr><td>{{ session.session_date }}</td><td>{{ session.training_type_name }}{% if session.title %} — {{ session.title }}{% endif %}</td></tr>
+        {% else %}<tr><td colspan="2" class="muted">None.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+{% if not job_history and not training_sessions %}
+<form method="post" action="{{ url_for('people.delete_person_page', person_id=person.id) }}" style="margin-top: 30px" class="no-print">
+  <button class="danger" type="submit">Delete this person</button>
+  <span class="muted small">Only possible while they have no job or training history.</span>
+</form>
+{% endif %}
+{% endblock %}

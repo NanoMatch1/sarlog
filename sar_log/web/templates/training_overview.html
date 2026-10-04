@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Training{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Training</h1>
+  <div>
+    <a class="button secondary" href="{{ url_for('training.training_types_page') }}">Training types</a>
+    <a class="button secondary" href="{{ url_for('training.training_sessions_page') }}">All sessions</a>
+    <a class="button secondary" href="{{ url_for('training.training_matrix_page', as_of=as_of) }}">Qualification matrix</a>
+    <a class="button" href="{{ url_for('training.new_training_session_page') }}">+ Record training</a>
+  </div>
+</div>
+
+<form class="filters card no-print" method="get">
+  <label>As of <input type="date" name="as_of" value="{{ as_of }}"></label>
+  <label>Lapsed if no training for (months) <input type="number" name="lapse_months" min="1" value="{{ lapse_months }}" style="width: 6em"></label>
+  <button type="submit">Update</button>
+</form>
+
+<h2>Training gaps <span class="muted small">— active members current in each training type, biggest gaps first</span></h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>Training type</th><th class="number">Current</th><th class="number">Expired</th><th class="number">Never</th><th class="number">% current</th><th>Validity</th></tr></thead>
+  <tbody>
+    {% for gap in gaps %}
+      <tr><td>{{ gap.training_type.name }}</td>
+        <td class="number">{{ gap.current_count }}</td><td class="number">{{ gap.expired_count }}</td>
+        <td class="number">{{ gap.never_count }}</td><td class="number">{{ (100 * gap.current_fraction) | round(0) | int }}%</td>
+        <td>{{ (gap.training_type.validity_months ~ ' months') if gap.training_type.validity_months else 'does not expire' }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No training types yet. <a href="{{ url_for('training.training_types_page') }}">Add some</a>.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+
+<h2>Active members <span class="muted small">— {{ lapsed_count }} lapsed (no training in {{ lapse_months }} months; members who joined within that window are not counted)</span></h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Status</th><th>Last training</th><th class="number">Days since</th><th class="number">Sessions in last {{ period_months }} months</th><th>Contact</th></tr></thead>
+  <tbody>
+    {% for status in statuses %}
+      <tr><td><a href="{{ url_for('people.person_detail_page', person_id=status.person.id) }}">{{ status.person.full_name }}</a></td>
+        <td>{% if status.is_lapsed %}<span class="badge lapsed">lapsed</span>{% else %}<span class="badge current">ok</span>{% endif %}</td>
+        <td>{{ status.last_training_date or 'never' }}</td>
+        <td class="number">{{ status.days_since_last_training if status.days_since_last_training is not none else '—' }}</td>
+        <td class="number">{{ status.sessions_in_period }}</td>
+        <td class="small">{{ status.person.email }} {{ status.person.phone }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No active members.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

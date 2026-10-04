@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Training types{% endblock %}
+{% block content %}
+<h1>Training types</h1>
+<p class="muted">Validity (months) controls whether a qualification expires; leave it blank for training that does not.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Description</th><th>Validity (months)</th><th>Archived</th><th></th></tr></thead>
+  <tbody>
+    {% for training_type in training_types %}
+      <tr>
+        <td><input form="row-form-{{ training_type.id }}" type="text" name="name" value="{{ training_type.name }}"></td>
+        <td><input form="row-form-{{ training_type.id }}" type="text" name="description" value="{{ training_type.description }}" style="width: 100%"></td>
+        <td><input form="row-form-{{ training_type.id }}" type="number" name="validity_months" min="1" value="{{ training_type.validity_months or '' }}" style="width: 6em"></td>
+        <td><input form="row-form-{{ training_type.id }}" type="checkbox" name="is_archived" value="1" {{ 'checked' if training_type.is_archived }}></td>
+        <td><form id="row-form-{{ training_type.id }}" method="post"><input form="row-form-{{ training_type.id }}" type="hidden" name="training_type_id" value="{{ training_type.id }}"></form><button form="row-form-{{ training_type.id }}" class="secondary" type="submit">Save</button></td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td><input form="row-form-new" type="text" name="name" placeholder="New training type"></td>
+      <td><input form="row-form-new" type="text" name="description" placeholder="Description" style="width: 100%"></td>
+      <td><input form="row-form-new" type="number" name="validity_months" min="1" style="width: 6em"></td>
+      <td></td>
+      <td><form id="row-form-new" method="post"></form><button form="row-form-new" type="submit">Add</button></td>
+    </tr>
+  </tbody>
+</table></div>
+{% endblock %}

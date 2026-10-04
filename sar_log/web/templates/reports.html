@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import report_table %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+{% set range_args = {'start_date': date_range.start_date or '', 'end_date': date_range.end_date or ''} %}
+<div class="page-header">
+  <h1>Reports</h1>
+  <div class="no-print">
+    <a class="button secondary" href="{{ url_for('reports.exports_page') }}">Export data</a>
+    <button class="secondary" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<form class="filters card no-print" method="get">
+  <label>From <input type="date" name="start_date" value="{{ date_range.start_date or '' }}"></label>
+  <label>To <input type="date" name="end_date" value="{{ date_range.end_date or '' }}"></label>
+  <label>Group by
+    <select name="period">
+      <option value="year" {{ 'selected' if period == 'year' }}>year</option>
+      <option value="month" {{ 'selected' if period == 'month' }}>month</option>
+    </select>
+  </label>
+  <label>Cross-tab rows
+    <select name="row_field"><option value="">—</option>
+      {% for definition in countable_fields %}<option value="{{ definition.key }}" {{ 'selected' if row_field == definition.key }}>{{ definition.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Cross-tab columns
+    <select name="column_field"><option value="">—</option>
+      {% for definition in countable_fields %}<option value="{{ definition.key }}" {{ 'selected' if column_field == definition.key }}>{{ definition.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit">Update</button>
+</form>
+
+<p class="muted">Period: {{ date_range.start_date or 'all records' }}{% if date_range.end_date %} to {{ date_range.end_date }}{% elif date_range.start_date %} onwards{% endif %}</p>
+<div class="stats">
+  <div class="stat"><div class="value">{{ overview.job_count }}</div><div class="label">Jobs</div></div>
+  <div class="stat"><div class="value">{{ overview.person_hours }}</div><div class="label">Person hours</div></div>
+  <div class="stat"><div class="value">{{ overview.attendance_count }}</div><div class="label">Attendances</div></div>
+  <div class="stat"><div class="value">{{ overview.distinct_people }}</div><div class="label">Different people</div></div>
+</div>
+
+{% if crosstab %}
+  {{ report_table(crosstab, url_for('reports.download_report', report_name='crosstab', row_field=row_field, column_field=column_field, **range_args)) }}
+{% endif %}
+
+{{ report_table(per_period, url_for('reports.download_report', report_name='per_period', period=period, **range_args), bar_column=1) }}
+
+<div class="grid-2">
+  {{ report_table(hours_by_organisation, url_for('reports.download_report', report_name='hours_by_organisation', **range_args), bar_column=1) }}
+  {{ report_table(numeric_totals, url_for('reports.download_report', report_name='numeric_totals', **range_args)) }}
+</div>
+
+<h2>Jobs by field</h2>
+<div class="grid-2">
+  {% for field_key, table in field_tables %}
+    {{ report_table(table, url_for('reports.download_report', report_name='field', field_key=field_key, **range_args), bar_column=1) }}
+  {% endfor %}
+</div>
+
+{{ report_table(hours_by_person, url_for('reports.download_report', report_name='hours_by_person', **range_args), bar_column=2) }}
+{% endblock %}

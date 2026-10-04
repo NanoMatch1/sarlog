@@ -1,0 +1,14 @@
+# Personal data must never be committed.
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.csv
+*.xlsx
+!examples/header_example.xlsx
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/

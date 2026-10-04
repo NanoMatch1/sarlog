@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}People{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>People</h1>
+  <div>
+    <a class="button secondary" href="{{ url_for('people.organisations_page') }}">Organisations</a>
+    <a class="button" href="{{ url_for('people.new_person_page') }}">+ New person</a>
+  </div>
+</div>
+<p class="no-print">
+  {% if show == 'active' %}Showing active members ·
+    <a href="{{ url_for('people.list_people_page', show='all') }}">show everyone</a>
+  {% else %}Showing everyone ·
+    <a href="{{ url_for('people.list_people_page', show='active') }}">show active only</a>
+  {% endif %}
+</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>SAR ID</th><th>Organisation</th><th>Joined</th><th>Left</th></tr></thead>
+  <tbody>
+    {% for person in people %}
+      <tr>
+        <td><a href="{{ url_for('people.person_detail_page', person_id=person.id) }}">{{ person.full_name }}</a></td>
+        <td>{{ person.sar_id or '' }}</td>
+        <td>{{ person.organisation_name or '—' }}</td>
+        <td>{{ person.joined_date or '' }}</td>
+        <td>{{ person.left_date or '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No people yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

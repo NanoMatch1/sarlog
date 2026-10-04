@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Fields{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Job fields</h1>
+  <a class="button" href="{{ url_for('fields.new_field_page') }}">+ New field</a>
+</div>
+<p class="muted">These are the details recorded for every job. Adding a field here adds it to the job form, the job filters, the reports and the exports.
+  Archiving hides a field from forms but keeps every value already recorded.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Section</th><th>Label</th><th>Type</th><th>Choices</th><th class="number">Jobs using</th><th></th><th></th></tr></thead>
+  <tbody>
+    {% for definition in definitions %}
+      <tr class="{{ 'muted' if definition.is_archived }}">
+        <td>{{ definition.section }}</td>
+        <td>{{ definition.label }}{% if definition.is_required %} *{% endif %}{% if definition.is_archived %} <span class="small">(archived)</span>{% endif %}</td>
+        <td>{{ definition.field_type.label }}</td>
+        <td class="small">{{ definition.choices | join(', ') }}</td>
+        <td class="number">{{ usage[definition.key] }}</td>
+        <td><a href="{{ url_for('fields.edit_field_page', key=definition.key) }}">edit</a></td>
+        <td><form method="post" action="{{ url_for('fields.archive_field_page', key=definition.key) }}">
+          <input type="hidden" name="archive" value="{{ '0' if definition.is_archived else '1' }}">
+          <button class="link" type="submit">{{ 'restore' if definition.is_archived else 'archive' }}</button>
+        </form></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

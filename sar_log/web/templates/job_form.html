@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "_field_widgets.html" as widgets %}
+{% block title %}{{ 'Edit job ' ~ job.event_number if job else 'New job' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit job ' ~ job.event_number if job else 'New job' }}</h1>
+
+{# Values shown come from the rejected submission if there was one, else the saved job. #}
+{% set source = job_input if job_input else job %}
+
+<form class="stacked" method="post">
+  <fieldset>
+    <legend>Job</legend>
+    <label for="event_number">Event number *</label>
+    <input type="text" id="event_number" name="event_number" value="{{ source.event_number if source else '' }}" required>
+    <label for="start_date">Date *</label>
+    <input type="date" id="start_date" name="start_date" value="{{ source.start_date if source else '' }}" required>
+    <label for="name">Name <span class="help">— as in the old NAME column</span></label>
+    <input type="text" id="name" name="name" value="{{ source.name if source else '' }}">
+  </fieldset>
+
+  {% for section, definitions in sections.items() %}
+    <fieldset>
+      <legend>{{ section }}</legend>
+      {% for definition in definitions %}
+        {% if job_input %}
+          {% set values = job_input.raw_field_values.get(definition.key, []) %}
+        {% elif job %}
+          {% set values = job.values_for(definition.key) %}
+        {% else %}
+          {% set values = [] %}
+        {% endif %}
+        {{ (widgets | attr(definition.field_type.widget))(definition, values, field_prefix) }}
+      {% endfor %}
+    </fieldset>
+  {% endfor %}
+
+  <fieldset>
+    <legend>Notes</legend>
+    <label for="notes">Notes <span class="help">— anything not yet captured by a field</span></label>
+    <textarea id="notes" name="notes" rows="6">{{ source.notes if source else '' }}</textarea>
+  </fieldset>
+
+  <button type="submit">Save job</button>
+  <a class="button secondary" href="{{ url_for('jobs.job_detail_page', job_id=job.id) if job else url_for('jobs.list_jobs_page') }}">Cancel</a>
+  <p class="muted small">Need a detail that isn't here? Add it on the <a href="{{ url_for('fields.new_field_page') }}">Fields page</a>.</p>
+</form>
+{% endblock %}

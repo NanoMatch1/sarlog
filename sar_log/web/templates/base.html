@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SAR Log{% endblock %} · SAR Log</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% set endpoint = request.endpoint or '' %}
+  <nav class="top">
+    <a class="brand" href="{{ url_for('jobs.list_jobs_page') }}">SAR Log</a>
+    <a href="{{ url_for('jobs.list_jobs_page') }}" class="{{ 'current' if endpoint.startswith('jobs.') }}">Jobs</a>
+    <a href="{{ url_for('people.list_people_page') }}" class="{{ 'current' if endpoint.startswith('people.') }}">People</a>
+    <a href="{{ url_for('training.training_overview_page') }}" class="{{ 'current' if endpoint.startswith('training.') }}">Training</a>
+    <a href="{{ url_for('reports.reports_page') }}" class="{{ 'current' if endpoint.startswith('reports.') }}">Reports</a>
+    <a href="{{ url_for('fields.list_fields_page') }}" class="{{ 'current' if endpoint.startswith('fields.') }}">Fields</a>
+    <a href="{{ url_for('admin.changes_page') }}" class="{{ 'current' if endpoint.startswith('admin.') }}">History</a>
+  </nav>
+  <main>
+    {% for message in get_flashed_messages() %}<div class="flash">{{ message }}</div>{% endfor %}
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

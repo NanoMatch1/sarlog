@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit training session' if session else 'Record training' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit training session' if session else 'Record training' }}</h1>
+{% set source = form_values if form_values else (session.__dict__ if session else {}) %}
+{% set selected_ids = source.get('attendee_ids', []) %}
+<form class="stacked" method="post">
+  <fieldset><legend>Session</legend>
+    <label for="session_date">Date *</label>
+    <input type="date" id="session_date" name="session_date" value="{{ source.get('session_date', '') }}" required>
+    <label for="training_type_id">Training type * <span class="help"><a href="{{ url_for('training.training_types_page') }}">manage types</a></span></label>
+    <select id="training_type_id" name="training_type_id" required>
+      <option value="">— choose —</option>
+      {% for training_type in training_types %}
+        <option value="{{ training_type.id }}" {{ 'selected' if source.get('training_type_id') == training_type.id }}>{{ training_type.name }}</option>
+      {% endfor %}
+    </select>
+    <label for="title">Title <span class="help">— optional, e.g. the name used in the old training sheet</span></label>
+    <input type="text" id="title" name="title" value="{{ source.get('title', '') }}">
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes">{{ source.get('notes', '') }}</textarea>
+  </fieldset>
+  <fieldset><legend>Attended</legend>
+    <div class="checkbox-grid">
+      {% for person in people %}
+        <label><input type="checkbox" name="attendee_ids" value="{{ person.id }}" {{ 'checked' if person.id in selected_ids }}>
+          {{ person.full_name }}{% if person.left_date %} <span class="muted small">(left)</span>{% endif %}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <button type="submit">Save</button>
+  <a class="button secondary" href="{{ url_for('training.training_sessions_page') }}">Cancel</a>
+</form>
+{% if session %}
+<form method="post" action="{{ url_for('training.delete_training_session_page', session_id=session.id) }}" style="margin-top: 24px" class="no-print">
+  <button class="danger" type="submit" onclick="return confirm('Delete this training session?')">Delete session</button>
+</form>
+{% endif %}
+{% endblock %}

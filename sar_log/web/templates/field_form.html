@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit field' if definition else 'New field' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit field: ' ~ definition.label if definition else 'New field' }}</h1>
+{% macro value(name, saved) -%}{{ form_values.get(name, saved) }}{%- endmacro %}
+<form class="stacked card" method="post">
+  <label for="label">Label *</label>
+  <input type="text" id="label" name="label" value="{{ value('label', definition.label if definition else '') }}" required>
+
+  <label for="value_type">Type</label>
+  {% if definition %}
+    <p>{{ definition.field_type.label }} <span class="help">— the type cannot change once created</span></p>
+  {% else %}
+    <select id="value_type" name="value_type">
+      {% for type_name, field_type in field_types.items() %}
+        <option value="{{ type_name }}" {{ 'selected' if form_values.get('value_type') == type_name }}>{{ field_type.label }}</option>
+      {% endfor %}
+    </select>
+  {% endif %}
+
+  <label for="section">Section <span class="help">— groups fields on the job form</span></label>
+  <input type="text" id="section" name="section" list="known-sections" value="{{ value('section', definition.section if definition else 'Details') }}">
+  <datalist id="known-sections">{% for section in sections %}<option value="{{ section }}">{% endfor %}</datalist>
+
+  <label for="description">Description <span class="help">— shown next to the field to guide data entry</span></label>
+  <input type="text" id="description" name="description" value="{{ value('description', definition.description if definition else '') }}">
+
+  {% if not definition or definition.field_type.uses_choices %}
+    <label for="choices">Choices <span class="help">— one per line; only for list types</span></label>
+    <textarea id="choices" name="choices" rows="8">{{ value('choices', definition.choices | join('\n') if definition else '') }}</textarea>
+  {% endif %}
+
+  <label class="inline"><input type="checkbox" name="is_required" value="1" {{ 'checked' if (form_values.get('is_required') if form_values else (definition and definition.is_required)) }}> Required on new jobs</label>
+
+  {% if definition %}
+    <label for="sort_order">Sort order <span class="help">— smaller numbers appear first</span></label>
+    <input type="number" id="sort_order" name="sort_order" value="{{ value('sort_order', definition.sort_order) }}">
+  {% endif %}
+  <p><button type="submit">Save field</button>
+    <a class="button secondary" href="{{ url_for('fields.list_fields_page') }}">Cancel</a></p>
+</form>
+
+{% if definition and definition.field_type.uses_choices %}
+<form class="filters card" method="post" action="{{ url_for('fields.rename_choice_page', key=definition.key) }}">
+  <strong>Rename a choice</strong> <span class="muted small">(also updates every job that used it)</span>
+  <label>Choice
+    <select name="old_choice">{% for choice in definition.choices %}<option>{{ choice }}</option>{% endfor %}</select>
+  </label>
+  <label>New name <input type="text" name="new_choice"></label>
+  <button class="secondary" type="submit">Rename</button>
+</form>
+{% endif %}
+{% endblock %}
