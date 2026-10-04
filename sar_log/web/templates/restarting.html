@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Restarting{% endblock %}
+{% block content %}
+<h1>Restarting SAR Log…</h1>
+<p id="restart-status">Applying the update. This page will reload by itself in a few seconds.</p>
+<script>
+  // Wait for the old server to stop, then poll until the new one answers.
+  const healthUrl = "{{ url_for('updates.health') }}";
+  const updatesUrl = "{{ url_for('updates.updates_page') }}";
+  let attempts = 0;
+  function poll() {
+    attempts += 1;
+    fetch(healthUrl, {cache: "no-store"})
+      .then(response => response.ok ? (window.location.href = updatesUrl) : retry())
+      .catch(retry);
+  }
+  function retry() {
+    if (attempts > 90) {
+      document.getElementById("restart-status").textContent =
+        "SAR Log has not come back yet. Check the SAR Log window for messages, or start it again.";
+      return;
+    }
+    setTimeout(poll, 1000);
+  }
+  setTimeout(poll, 2500);
+</script>
+{% endblock %}

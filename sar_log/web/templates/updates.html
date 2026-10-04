@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Updates{% endblock %}
+{% block content %}
+<h1>Updates</h1>
+<p>You are running <strong>SAR Log {{ current_version }}</strong>. Updates come from {{ source_description }}.
+  They replace the program only — your records in the <code>data</code> folder are never touched, and a backup is made every time SAR Log starts.</p>
+
+{% if last_result %}
+  <div class="{{ 'flash' if last_result.succeeded else 'error' }}">
+    Last update ({{ last_result.finished_at.replace('T', ' ') }}): {{ last_result.message }}</div>
+{% endif %}
+
+{% if is_development_checkout %}
+  <div class="card"><p>This copy is a development (git) checkout, so in-app updates are switched off. Use <code>git pull</code>.</p></div>
+{% elif pending %}
+  <div class="card">
+    <h3>{{ 'Update to version ' ~ pending.version if pending.action == 'install' else 'Going back to version ' ~ pending.version }} is ready</h3>
+    {% if can_restart %}
+      <p>Restart SAR Log to finish. This takes a few seconds and the page will reload by itself.</p>
+      <form method="post" action="{{ url_for('updates.restart_page') }}" style="display: inline"><button type="submit">Restart now</button></form>
+    {% else %}
+      <p>Close the SAR Log window and start it again to finish.</p>
+    {% endif %}
+    <form method="post" action="{{ url_for('updates.cancel_page') }}" style="display: inline"><button class="secondary" type="submit">Cancel</button></form>
+  </div>
+{% else %}
+  <div class="card">
+    {% if not checked %}
+      <a class="button" href="{{ url_for('updates.updates_page', check=1) }}">Check for updates</a>
+    {% elif check_error %}
+      <div class="error">Could not check for updates: {{ check_error }}</div>
+      <a class="button secondary" href="{{ url_for('updates.updates_page', check=1) }}">Try again</a>
+    {% elif latest %}
+      <h3>Version {{ latest }} is available</h3>
+      {% for version, notes in newer_notes %}
+        <h3 class="muted">What's new in {{ version }}</h3>
+        <div style="white-space: pre-wrap">{{ notes }}</div>
+      {% endfor %}
+      <form method="post" action="{{ url_for('updates.install_update_page') }}" style="margin-top: 14px">
+        <input type="hidden" name="version" value="{{ latest }}">
+        <button type="submit">Download and install {{ latest }}</button>
+      </form>
+    {% else %}
+      <p>SAR Log is up to date.</p>
+      <a class="button secondary" href="{{ url_for('updates.updates_page', check=1) }}">Check again</a>
+    {% endif %}
+  </div>
+
+  {% if previous_version %}
+    <details class="card">
+      <summary>Something wrong since the last update?</summary>
+      <p>You can go back to version {{ previous_version }}. If that update changed how records are stored, the older version will refuse to open them and explain how to restore a backup.</p>
+      <form method="post" action="{{ url_for('updates.rollback_page') }}"><button class="secondary" type="submit">Go back to version {{ previous_version }}</button></form>
+    </details>
+  {% endif %}
+{% endif %}
+{% endblock %}

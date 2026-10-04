@@ -31,7 +31,9 @@ def make_person(connection):
 
 @pytest.fixture
 def app_config(tmp_path) -> AppConfig:
-    return AppConfig(database_path=tmp_path / "app.sqlite", backup_directory=tmp_path / "backups")
+    # A separate, non-git install folder so update tests never touch the real checkout.
+    return AppConfig(database_path=tmp_path / "app.sqlite", backup_directory=tmp_path / "backups",
+                     install_directory=tmp_path / "install", check_for_updates_on_start=False)
 
 
 @pytest.fixture

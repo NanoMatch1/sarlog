@@ -39,6 +39,7 @@ nav.top {
 }
 nav.top .brand { color: #fff; font-weight: 700; margin-right: 12px; text-decoration: none; }
 nav.top a { color: #d6e2db; text-decoration: none; padding: 4px 0; }
+nav.top a.nav-updates { margin-left: auto; font-size: 0.85rem; }
 nav.top a:hover, nav.top a.current { color: #fff; border-bottom: 2px solid var(--colour-accent); }
 
 main { max-width: 1200px; margin: 0 auto; padding: 20px; }

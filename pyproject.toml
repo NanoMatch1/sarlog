@@ -1,6 +1,6 @@
 [project]
 name = "sar-log"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Local job, person-hours and training log for a SAR group"
 requires-python = ">=3.10"
 dependencies = ["flask>=3.0", "waitress>=3.0"]
@@ -12,6 +12,9 @@ import = ["openpyxl>=3.1"]
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "sar_log.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["sar_log*"]
