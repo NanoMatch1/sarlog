@@ -6,7 +6,8 @@ requires-python = ">=3.10"
 dependencies = ["flask>=3.0", "waitress>=3.0"]
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+# quickjs runs the browser sorting script in tests; they are skipped without it.
+test = ["pytest>=8", "quickjs>=1.19"]
 import = ["openpyxl>=3.1"]
 
 [build-system]

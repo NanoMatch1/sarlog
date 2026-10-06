@@ -6,7 +6,7 @@
   <form method="post" action="{{ url_for('admin.backup_now_page') }}"><button class="secondary" type="submit">Back up now</button></form>
 </div>
 <p class="muted">Every change made in the app, newest first (latest 300). A backup is also made each time the app starts.</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="sortable">
   <thead><tr><th>When</th><th>What</th><th>Action</th><th>Detail</th></tr></thead>
   <tbody>
     {% for change in changes %}

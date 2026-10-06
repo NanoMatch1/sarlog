@@ -28,7 +28,7 @@
 <p class="muted">{{ jobs | length }} job{{ '' if jobs | length == 1 else 's' }} ·
   {{ totals.values() | sum(attribute='person_hours') | round(1) }} person hours</p>
 
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="sortable">
   <thead><tr>
     <th>Date</th><th>Event no.</th><th>Name</th>
     {% for definition in summary_fields %}<th>{{ definition.label }}</th>{% endfor %}

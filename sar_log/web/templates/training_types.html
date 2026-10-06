@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Training types</h1>
 <p class="muted">Validity (months) controls whether a qualification expires; leave it blank for training that does not.</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="sortable">
   <thead><tr><th>Name</th><th>Description</th><th>Validity (months)</th><th>Archived</th><th></th></tr></thead>
   <tbody>
     {% for training_type in training_types %}

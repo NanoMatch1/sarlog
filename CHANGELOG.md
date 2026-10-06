@@ -3,6 +3,19 @@
 Each release has a section headed `## vX.Y.Z`. The Updates page in the app
 shows these notes to the user, so write them for the person entering data.
 
+## v0.3.0 — 2026-10-06
+- New **Feedback** page (top right of the menu). Write down problems, ideas
+  and questions as you go; the page you were on is noted with them. Copy
+  the open ones into an email, or download them, to send them on.
+- **People** can now be filtered by organisation, search text, a training
+  (who has done it, who is current, expired or has never done it), and by
+  training dates ("trained since" / "not trained since"). The filtered list
+  can be downloaded as a spreadsheet, and shows each person's last training,
+  number of trainings, jobs and hours.
+- Click any column heading in a table to sort by it; click again to reverse.
+- A person's page shows how long since they joined, in years and months
+  (up to their "Left" date if they have left).
+
 ## v0.2.1 — 2026-10-04
 - Yes/No details now show as "Yes" and "No" on job pages.
 

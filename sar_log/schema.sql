@@ -1,4 +1,4 @@
--- SAR log schema, version 1.
+-- SAR log schema, version 2 (see MIGRATIONS in database.py for the history).
 --
 -- Design notes
 -- * Jobs keep only their identity columns (event number, date, name, notes).
@@ -113,4 +113,17 @@ CREATE TABLE IF NOT EXISTS change_log (
     entity_id   TEXT NOT NULL,
     action      TEXT NOT NULL,
     detail_json TEXT NOT NULL DEFAULT '{}'
+);
+
+-- Messages from the people using the app: problems, ideas and questions.
+-- Kept locally; the Feedback page copies or downloads them to send on.
+CREATE TABLE IF NOT EXISTS feedback (
+    id          INTEGER PRIMARY KEY,
+    created_at  TEXT NOT NULL,
+    kind        TEXT NOT NULL,
+    message     TEXT NOT NULL,
+    page        TEXT NOT NULL DEFAULT '',
+    app_version TEXT NOT NULL DEFAULT '',
+    is_resolved INTEGER NOT NULL DEFAULT 0,
+    resolution  TEXT NOT NULL DEFAULT ''
 );

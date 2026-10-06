@@ -8,26 +8,79 @@
     <a class="button" href="{{ url_for('people.new_person_page') }}">+ New person</a>
   </div>
 </div>
-<p class="no-print">
-  {% if show == 'active' %}Showing active members ·
-    <a href="{{ url_for('people.list_people_page', show='all') }}">show everyone</a>
-  {% else %}Showing everyone ·
-    <a href="{{ url_for('people.list_people_page', show='active') }}">show active only</a>
-  {% endif %}
-</p>
-<div class="table-wrap"><table>
-  <thead><tr><th>Name</th><th>SAR ID</th><th>Organisation</th><th>Joined</th><th>Left</th></tr></thead>
+
+<form class="filters card no-print" method="get">
+  <label>Show
+    <select name="membership">
+      {% for value, label in membership_choices.items() %}
+        <option value="{{ value }}" {{ 'selected' if person_filter.membership == value }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Organisation
+    <select name="organisation_id">
+      <option value="">any</option>
+      {% for organisation in organisations %}
+        <option value="{{ organisation.id }}" {{ 'selected' if person_filter.organisation_id == organisation.id }}>{{ organisation.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Search <input type="text" name="text" value="{{ person_filter.text }}" placeholder="name, SAR ID, contact, comments"></label>
+  <label>Training
+    <select name="training_type_id">
+      <option value="">any training</option>
+      {% for training_type in training_types %}
+        <option value="{{ training_type.id }}" {{ 'selected' if person_filter.training_type_id == training_type.id }}>{{ training_type.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Where the person
+    <select name="training_status">
+      <option value="">(any status)</option>
+      {% for value, (label, _) in training_status_choices.items() %}
+        <option value="{{ value }}" {{ 'selected' if person_filter.training_status == value }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Trained since <input type="date" name="trained_since" value="{{ person_filter.trained_since or '' }}"></label>
+  <label>Not trained since <input type="date" name="not_trained_since" value="{{ person_filter.not_trained_since or '' }}"></label>
+  <label>As of <input type="date" name="as_of" value="{{ as_of }}"></label>
+  <button type="submit">Filter</button>
+  <a href="{{ url_for('people.list_people_page') }}">Clear</a>
+</form>
+<p class="muted small no-print">"Where the person…" needs a training chosen. The two dates apply to the chosen training, or to any training when none is chosen. "Not trained since" includes people who have never trained.</p>
+
+{% set selected_type = training_types | selectattr('id', 'equalto', person_filter.training_type_id) | first %}
+<div class="page-header">
+  <p class="muted">{{ summaries | length }} {{ 'person' if summaries | length == 1 else 'people' }}</p>
+  <a class="small no-print" href="{{ url_for('people.download_people_page', **request.args) }}">Download this list (CSV)</a>
+</div>
+<div class="table-wrap"><table class="sortable">
+  <thead><tr>
+    <th>Name</th><th>SAR ID</th><th>Organisation</th><th>Joined</th><th>Left</th>
+    <th>Last training</th><th class="number">Trainings</th><th class="number">Jobs</th><th class="number">Job hours</th>
+    {% if selected_type %}<th>{{ selected_type.name }}</th>{% endif %}
+  </tr></thead>
   <tbody>
-    {% for person in people %}
+    {% for summary in summaries %}
+      {% set person = summary.person %}
       <tr>
         <td><a href="{{ url_for('people.person_detail_page', person_id=person.id) }}">{{ person.full_name }}</a></td>
         <td>{{ person.sar_id or '' }}</td>
-        <td>{{ person.organisation_name or '—' }}</td>
+        <td>{{ person.organisation_name or '' }}</td>
         <td>{{ person.joined_date or '' }}</td>
         <td>{{ person.left_date or '' }}</td>
+        <td data-sort-value="{{ summary.last_training_date or '' }}">{{ summary.last_training_date or 'never' }}</td>
+        <td class="number">{{ summary.training_count }}</td>
+        <td class="number">{{ summary.job_count }}</td>
+        <td class="number">{{ summary.job_hours | round(1) }}</td>
+        {% if selected_type %}
+          {% set cell = summary.selected_training %}
+          <td data-sort-value="{{ cell.last_date or '' }}"><span class="badge {{ cell.status }}">{{ cell.last_date or 'never' }}</span></td>
+        {% endif %}
       </tr>
     {% else %}
-      <tr><td colspan="5" class="muted">No people yet.</td></tr>
+      <tr><td colspan="10" class="muted">No people match.</td></tr>
     {% endfor %}
   </tbody>
 </table></div>

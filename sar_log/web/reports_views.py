@@ -104,6 +104,7 @@ EXPORTS: dict[str, Callable[[], str]] = {
     "attendance": lambda: exports.attendance_csv(connection()),
     "people": lambda: exports.people_csv(connection()),
     "training": lambda: exports.training_csv(connection()),
+    "feedback": lambda: exports.feedback_csv(connection()),
 }
 
 

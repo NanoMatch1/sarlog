@@ -39,7 +39,8 @@ nav.top {
 }
 nav.top .brand { color: #fff; font-weight: 700; margin-right: 12px; text-decoration: none; }
 nav.top a { color: #d6e2db; text-decoration: none; padding: 4px 0; }
-nav.top a.nav-updates { margin-left: auto; font-size: 0.85rem; }
+nav.top a.nav-feedback { margin-left: auto; }
+nav.top a.nav-updates { font-size: 0.85rem; }
 nav.top a:hover, nav.top a.current { color: #fff; border-bottom: 2px solid var(--colour-accent); }
 
 main { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -99,6 +100,8 @@ button.link { background: none; border: none; color: var(--colour-accent-dark); 
 
 .filters { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-end; }
 .filters label { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--colour-muted); gap: 2px; }
+.choice-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 10px; }
+.choice-row label { display: inline-flex; align-items: center; gap: 6px; }
 
 dl.details { display: grid; grid-template-columns: max-content 1fr; gap: 4px 18px; margin: 0; }
 dl.details dt { color: var(--colour-muted); }
@@ -123,3 +126,11 @@ td.bar-cell { width: 35%; }
 @media (max-width: 640px) {
   main { padding: 12px; }
 }
+
+/* Sortable tables (static/table_sort.js) */
+th.sort-heading { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sort-heading:hover { background: #e2e7e4; }
+th.sort-heading::after { content: " ↕"; color: var(--colour-muted); font-weight: 400; }
+th.sort-heading[aria-sort="ascending"]::after { content: " ▲"; color: inherit; }
+th.sort-heading[aria-sort="descending"]::after { content: " ▼"; color: inherit; }
+@media print { th.sort-heading::after { content: ""; } }

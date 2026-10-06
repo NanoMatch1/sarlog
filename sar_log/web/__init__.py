@@ -12,13 +12,13 @@ from sar_log.database import connect, open_database
 from sar_log.errors import NotFoundError
 from sar_log.updater.installer import InstallLayout
 from sar_log.updater.sources import UpdateSource
-from sar_log.web import (admin_views, fields_views, jobs_views, people_views, reports_views,
-                         training_views, updates_views)
+from sar_log.web import (admin_views, feedback_views, fields_views, jobs_views, people_views,
+                         reports_views, training_views, updates_views)
 
 # Each views module exposes a ``blueprint``. This tuple is the one place a new
 # page module is wired in.
 VIEW_MODULES = (jobs_views, people_views, training_views, reports_views, fields_views, admin_views,
-                updates_views)
+                updates_views, feedback_views)
 
 LOCAL_HOST_NAMES = {"127.0.0.1", "localhost"}
 

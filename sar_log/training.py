@@ -198,7 +198,7 @@ def _load_sessions(connection: sqlite3.Connection, where_clause: str, parameters
 
 # ---------------------------------------------------------------- summaries
 
-def _attendance_dates(connection: sqlite3.Connection, as_of: datetime.date) -> dict[int, list[tuple[str, int]]]:
+def attendance_by_person(connection: sqlite3.Connection, as_of: datetime.date) -> dict[int, list[tuple[str, int]]]:
     """person id -> [(session date, training type id)] for sessions on or before as_of."""
     dates_by_person: dict[int, list[tuple[str, int]]] = defaultdict(list)
     for row in connection.execute(
@@ -234,7 +234,7 @@ def member_training_status(
     ``as_of``. Members who joined within that window are not counted as
     lapsed, since they have not yet had the chance.
     """
-    dates_by_person = _attendance_dates(connection, as_of)
+    dates_by_person = attendance_by_person(connection, as_of)
     period_start = add_months(as_of, -period_months).isoformat()
     lapse_cutoff = add_months(as_of, -lapse_months).isoformat()
     statuses = []
@@ -286,7 +286,7 @@ class QualificationMatrix:
 def qualification_matrix(connection: sqlite3.Connection, as_of: datetime.date) -> QualificationMatrix:
     training_types = list_training_types(connection)
     people = list_people(connection, active_on=as_of)
-    dates_by_person = _attendance_dates(connection, as_of)
+    dates_by_person = attendance_by_person(connection, as_of)
     cells = {}
     for person in people:
         last_date_by_type: dict[int, str] = {}

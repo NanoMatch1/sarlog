@@ -6,7 +6,7 @@
     </div>
     {% if report.rows %}
       {% set bar_maximum = (report.rows | map(attribute=bar_column) | max) if bar_column is not none else 0 %}
-      <div class="table-wrap"><table>
+      <div class="table-wrap"><table class="sortable">
         <thead><tr>
           {% for heading in report.headings %}<th class="{{ 'number' if not loop.first }}">{{ heading }}</th>{% endfor %}
           {% if bar_column is not none %}<th></th>{% endif %}

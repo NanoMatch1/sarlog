@@ -158,6 +158,18 @@ def test_training_workflow(client):
     assert "Refresher" in page_text(client.get(f"/people/{alice}"))
     assert "First aid,Refresher,Alice Example" in client.get("/exports/training.csv").get_data(as_text=True)
 
+    # Find who still needs first aid, then download just those people.
+    needs_first_aid = f"training_type_id={first_aid_id}&training_status=not_current&as_of=2026-06-30"
+    people_page = page_text(client.get(f"/people?{needs_first_aid}"))
+    assert "1 person" in people_page and "Bob Example" in people_page and "Alice Example" not in people_page
+    download = client.get(f"/people.csv?{needs_first_aid}").get_data(as_text=True)
+    assert "Bob Example" in download and "Alice Example" not in download
+    no_training_this_year = page_text(client.get("/people?not_trained_since=2026-01-01&as_of=2026-06-30"))
+    assert "Bob Example" in no_training_this_year and "Alice Example" not in no_training_this_year
+
+    # The person card counts time since joining.
+    assert re.search(r"6 Years since joined 5 \+ months", page_text(client.get(f"/people/{alice}?as_of=2026-06-30")))
+
 
 def test_field_management_workflow(client):
     client.post("/jobs/new", data={"event_number": "E1", "start_date": "2026-01-01",
@@ -187,7 +199,7 @@ def test_person_validation_and_left_members(client):
     assert response.status_code == 400 and "before" in page_text(response)
     add_person(client, "Departed Person", left_date="2025-01-01")
     assert "Departed Person" not in page_text(client.get("/people"))
-    assert "Departed Person" in page_text(client.get("/people?show=all"))
+    assert "Departed Person" in page_text(client.get("/people?membership=all"))
 
 
 def test_every_page_renders_with_demo_data(app_config):
@@ -201,7 +213,9 @@ def test_every_page_renders_with_demo_data(app_config):
                 "/organisations", "/training", "/training/matrix", "/training/sessions",
                 "/training/sessions/new", "/training/sessions/1/edit", "/training/types",
                 "/reports", "/reports?period=month&row_field=lost_party_type&column_field=district",
-                "/exports", "/fields", "/fields/new", "/fields/lost_party_type/edit", "/changes"]:
+                "/exports", "/fields", "/fields/new", "/fields/lost_party_type/edit", "/changes",
+                "/feedback", "/feedback?show=all", "/people?membership=all&training_type_id=1&training_status=never",
+                "/exports/feedback.csv"]:
         assert client.get(url).status_code == 200, url
     for report_url in ["per_period", "hours_by_organisation", "hours_by_person", "numeric_totals"]:
         assert client.get(f"/reports/download/{report_url}.csv").status_code == 200
@@ -214,3 +228,42 @@ def test_requests_from_other_hosts_or_sites_are_refused(client):
     response = client.post("/organisations", data={"name": "X"}, headers={"Origin": "http://evil.example"})
     assert response.status_code == 403
     assert client.get("/jobs", headers={"Host": "127.0.0.1:8765"}).status_code == 200
+
+
+def test_feedback_workflow(client):
+    # The Feedback link remembers which page the user was on.
+    people_page = client.get("/people").get_data(as_text=True)
+    assert 'href="/feedback?from_page=/people"' in people_page
+
+    form = page_text(client.get("/feedback?from_page=/people"))
+    assert "Written from the page /people" in form
+    response = client.post("/feedback", data={"kind": "idea", "message": "Filter by radio skills",
+                                              "page": "/people"}, follow_redirects=True)
+    assert response.request.path == "/people" and "Thanks, your feedback is saved" in page_text(response)
+
+    # A blank message is refused and the choice is kept.
+    response = client.post("/feedback", data={"kind": "problem", "message": " "})
+    assert response.status_code == 400 and "Write a message" in page_text(response)
+    # Only pages inside the app are used as the return address.
+    response = client.post("/feedback", data={"kind": "question", "message": "How do I print?",
+                                              "page": "//evil.example/"})
+    assert response.headers["Location"] == "/feedback"
+
+    page = page_text(client.get("/feedback"))
+    assert "2 open items" in page
+    assert "#1 · " in page and "Idea or feature request Filter by radio skills (page /people, version" in page
+    assert "Filter by radio skills" in client.get("/exports/feedback.csv").get_data(as_text=True)
+
+    client.post("/feedback/1/resolve", data={"is_resolved": "1", "resolution": "added in v0.4"})
+    page = page_text(client.get("/feedback"))
+    assert "1 open item " in page and "Filter by radio skills" not in page
+    assert "added in v0.4" in page_text(client.get("/feedback?show=all"))
+    assert client.post("/feedback/99/resolve", data={"is_resolved": "1"}).status_code == 404
+
+
+def test_list_tables_can_be_sorted_in_the_browser(client):
+    page = client.get("/people").get_data(as_text=True)
+    assert '<table class="sortable">' in page
+    assert "table_sort.js" in page
+    script = client.get("/static/table_sort.js")
+    assert script.status_code == 200 and b"SarTableSort" in script.data

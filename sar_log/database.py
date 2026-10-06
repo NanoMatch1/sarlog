@@ -26,9 +26,28 @@ class Migration:
     apply: Callable[[sqlite3.Connection], None]
 
 
+def _add_feedback_table(connection: sqlite3.Connection) -> None:
+    # A single execute, not executescript: executescript commits first, which
+    # would break the migration's all-or-nothing transaction.
+    connection.execute("""
+        CREATE TABLE feedback (
+            id          INTEGER PRIMARY KEY,
+            created_at  TEXT NOT NULL,
+            kind        TEXT NOT NULL,
+            message     TEXT NOT NULL,
+            page        TEXT NOT NULL DEFAULT '',
+            app_version TEXT NOT NULL DEFAULT '',
+            is_resolved INTEGER NOT NULL DEFAULT 0,
+            resolution  TEXT NOT NULL DEFAULT ''
+        )""")
+
+
 # Ordered list of migrations. Adding one is a single entry here plus the
-# matching change to schema.sql. The first schema is version 1.
-MIGRATIONS: tuple[Migration, ...] = ()
+# matching change to schema.sql. The first schema is version 1. Migrations
+# are frozen once released: they describe how the schema *was* changed.
+MIGRATIONS: tuple[Migration, ...] = (
+    Migration(2, "add feedback table (v0.3.0)", _add_feedback_table),
+)
 
 
 class DatabaseTooNewError(RuntimeError):

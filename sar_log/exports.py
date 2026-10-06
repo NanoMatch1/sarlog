@@ -6,9 +6,10 @@ import csv
 import io
 import sqlite3
 
+from sar_log.feedback import list_feedback
 from sar_log.fields import list_field_definitions
 from sar_log.jobs import JobFilter, job_totals, list_attendance_for_job, list_jobs
-from sar_log.people import list_people
+from sar_log.people import Person, list_people
 from sar_log.reports import ReportTable
 from sar_log.training import list_training_sessions
 
@@ -53,11 +54,12 @@ def attendance_csv(connection: sqlite3.Connection, job_filter: JobFilter | None 
     return table_to_csv(["Event number", "Date", "Person", "Organisation", "Hours", "Role"], rows)
 
 
-def people_csv(connection: sqlite3.Connection) -> str:
+def people_csv(connection: sqlite3.Connection, person_list: list[Person] | None = None) -> str:
+    """Everyone, or just the given people (e.g. the result of a People page filter)."""
     rows = [[person.sar_id or "", person.full_name, person.organisation_name or "",
              person.joined_date or "", person.left_date or "", person.email, person.phone,
              person.comments]
-            for person in list_people(connection)]
+            for person in (list_people(connection) if person_list is None else person_list)]
     return table_to_csv(["SAR ID", "Name", "Organisation", "Joined", "Left", "Email", "Phone",
                          "Comments"], rows)
 
@@ -71,3 +73,11 @@ def training_csv(connection: sqlite3.Connection) -> str:
             rows.append([session.session_date, session.training_type_name, session.title,
                          names.get(person_id, f"#{person_id}")])
     return table_to_csv(["Date", "Training type", "Title", "Person"], rows)
+
+
+def feedback_csv(connection: sqlite3.Connection) -> str:
+    rows = [[item.id, item.created_at, item.kind_label, item.message, item.page, item.app_version,
+             "yes" if item.is_resolved else "no", item.resolution]
+            for item in reversed(list_feedback(connection))]
+    return table_to_csv(["Number", "Written", "Kind", "Message", "Page", "Version", "Dealt with",
+                         "Resolution"], rows)

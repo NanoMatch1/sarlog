@@ -7,8 +7,21 @@ import sqlite3
 from dataclasses import dataclass
 
 from sar_log import audit
-from sar_log.dates import parse_optional_date
+from sar_log.dates import parse_optional_date, whole_months_between
 from sar_log.errors import NotFoundError, ValidationError
+
+
+@dataclass(frozen=True)
+class ServiceLength:
+    """Time from joining to leaving (or to today), in whole years and months."""
+
+    years: int
+    months: int
+
+    @classmethod
+    def from_months(cls, total_months: int) -> "ServiceLength":
+        years, months = divmod(total_months, 12)
+        return cls(years, months)
 
 
 @dataclass(frozen=True)
@@ -30,6 +43,16 @@ class Person:
         if self.joined_date and self.joined_date > as_of_text:
             return False
         return self.left_date is None or self.left_date > as_of_text
+
+    def service_length(self, as_of: datetime.date) -> ServiceLength | None:
+        """Time since joined, stopping at the 'Left' date. None without a joined date."""
+        if not self.joined_date:
+            return None
+        end = as_of
+        if self.left_date:
+            end = min(end, datetime.date.fromisoformat(self.left_date))
+        return ServiceLength.from_months(
+            whole_months_between(datetime.date.fromisoformat(self.joined_date), end))
 
 
 @dataclass(frozen=True)

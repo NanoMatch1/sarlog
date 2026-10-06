@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Feedback{% endblock %}
+{% block content %}
+<h1>Feedback</h1>
+<p class="muted">Found a problem, have an idea, or got stuck? Write it here while it's fresh. Feedback stays on
+  this computer until you send it on (see below). Please don't include personal details about members or
+  the people being searched for.</p>
+
+<form class="card no-print" method="post" action="{{ url_for('feedback.feedback_page') }}">
+  <input type="hidden" name="page" value="{{ form_values.page }}">
+  <div class="choice-row">
+    {% for value, label in kinds.items() %}
+      <label><input type="radio" name="kind" value="{{ value }}" {{ 'checked' if form_values.kind == value }} required> {{ label }}</label>
+    {% endfor %}
+  </div>
+  <label>Message
+    <textarea name="message" rows="5" style="width: 100%" required placeholder="What happened, or what would help? What were you trying to do?">{{ form_values.message }}</textarea>
+  </label>
+  {% if form_values.page %}<p class="muted small">Written from the page <code>{{ form_values.page }}</code>, which is saved with the message.</p>{% endif %}
+  <button type="submit">Save feedback</button>
+</form>
+
+<h2>Sending it on <span class="muted small">— {{ open_count }} open item{{ '' if open_count == 1 else 's' }}</span></h2>
+{% if open_count %}
+  <p>Copy the open items and paste them into an email or message, or download them as a spreadsheet.</p>
+  <textarea id="open-feedback-text" rows="6" style="width: 100%" readonly>{{ open_items_text }}</textarea>
+  <p class="no-print">
+    <button type="button" id="copy-feedback">Copy to clipboard</button>
+    <a class="button secondary" href="{{ url_for('reports.download_export', export_name='feedback') }}">Download CSV</a>
+    <span id="copy-feedback-result" class="muted small" role="status"></span>
+  </p>
+  <script>
+    document.getElementById("copy-feedback").addEventListener("click", function () {
+      var textArea = document.getElementById("open-feedback-text");
+      var result = document.getElementById("copy-feedback-result");
+      textArea.select();
+      var copied = navigator.clipboard
+        ? navigator.clipboard.writeText(textArea.value)
+        : (document.execCommand("copy") ? Promise.resolve() : Promise.reject());
+      copied.then(function () { result.textContent = "Copied."; },
+                  function () { result.textContent = "Couldn't copy automatically: the text is selected, press Ctrl+C."; });
+    });
+  </script>
+{% else %}
+  <p class="muted">Nothing open.</p>
+{% endif %}
+
+<div class="page-header">
+  <h2>{{ 'All feedback' if show_resolved else 'Open feedback' }}</h2>
+  {% if show_resolved %}<a class="small no-print" href="{{ url_for('feedback.feedback_page') }}">show open only</a>
+  {% else %}<a class="small no-print" href="{{ url_for('feedback.feedback_page', show='all') }}">show dealt-with too</a>{% endif %}
+</div>
+<div class="table-wrap"><table class="sortable">
+  <thead><tr><th>No.</th><th>Written</th><th>Kind</th><th>Message</th><th>Page</th><th>Version</th><th>Status</th><th class="no-print"></th></tr></thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td class="number">{{ item.id }}</td>
+        <td>{{ item.created_at.replace('T', ' ') }}</td>
+        <td>{{ item.kind_label }}</td>
+        <td style="white-space: pre-wrap">{{ item.message }}</td>
+        <td class="small">{{ item.page }}</td>
+        <td class="small">{{ item.app_version }}</td>
+        <td>{% if item.is_resolved %}<span class="badge current">dealt with</span>{% if item.resolution %}<div class="small">{{ item.resolution }}</div>{% endif %}
+          {% else %}<span class="badge expired">open</span>{% endif %}</td>
+        <td class="no-print">
+          <form method="post" action="{{ url_for('feedback.resolve_feedback_page', feedback_id=item.id, show='all' if show_resolved else None) }}">
+            {% if item.is_resolved %}
+              <input type="hidden" name="is_resolved" value="0">
+              <button class="secondary" type="submit">Reopen</button>
+            {% else %}
+              <input type="hidden" name="is_resolved" value="1">
+              <input type="text" name="resolution" placeholder="note, e.g. fixed in v0.3.1" class="small">
+              <button class="secondary" type="submit">Mark dealt with</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="muted">No feedback yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

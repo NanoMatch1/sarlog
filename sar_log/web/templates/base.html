@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}SAR Log{% endblock %} · SAR Log</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='table_sort.js') }}" defer></script>
 </head>
 <body>
   {% set endpoint = request.endpoint or '' %}
@@ -16,6 +17,7 @@
     <a href="{{ url_for('reports.reports_page') }}" class="{{ 'current' if endpoint.startswith('reports.') }}">Reports</a>
     <a href="{{ url_for('fields.list_fields_page') }}" class="{{ 'current' if endpoint.startswith('fields.') }}">Fields</a>
     <a href="{{ url_for('admin.changes_page') }}" class="{{ 'current' if endpoint.startswith('admin.') }}">History</a>
+    <a href="{{ url_for('feedback.feedback_page', from_page=request.path if not endpoint.startswith('feedback.') else None) }}" class="nav-feedback {{ 'current' if endpoint.startswith('feedback.') }}">Feedback</a>
     <a href="{{ url_for('updates.updates_page', check=1 if update_available else None) }}" class="nav-updates {{ 'current' if endpoint.startswith('updates.') }}">
       v{{ app_version }}{% if update_available %} <span class="badge expired">update available</span>{% endif %}</a>
   </nav>

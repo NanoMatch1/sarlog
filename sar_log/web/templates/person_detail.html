@@ -18,6 +18,13 @@
 </div>
 
 <div class="stats">
+  {% set service_label = 'served' if person.left_date else 'since joined' %}
+  {% if service_length %}
+    <div class="stat"><div class="value">{{ service_length.years }}</div><div class="label">Year{{ '' if service_length.years == 1 else 's' }} {{ service_label }}</div></div>
+    <div class="stat"><div class="value">{{ service_length.months }}</div><div class="label">+ month{{ '' if service_length.months == 1 else 's' }}</div></div>
+  {% else %}
+    <div class="stat"><div class="value">—</div><div class="label">Time since joined (no joined date)</div></div>
+  {% endif %}
   <div class="stat"><div class="value">{{ job_history | length }}</div><div class="label">Jobs</div></div>
   <div class="stat"><div class="value">{{ total_hours | round(1) }}</div><div class="label">Person hours</div></div>
   <div class="stat"><div class="value">{{ training_sessions | length }}</div><div class="label">Training sessions</div></div>
@@ -26,7 +33,7 @@
 <div class="grid-2">
   <div>
     <h2>Jobs</h2>
-    <div class="table-wrap"><table>
+    <div class="table-wrap"><table class="sortable">
       <thead><tr><th>Date</th><th>Event no.</th><th>Role</th><th class="number">Hours</th></tr></thead>
       <tbody>
         {% for job, record in job_history | sort(attribute='0.start_date', reverse=true) %}
@@ -39,7 +46,7 @@
   </div>
   <div>
     <h2>Training</h2>
-    <div class="table-wrap"><table>
+    <div class="table-wrap"><table class="sortable">
       <thead><tr><th>Date</th><th>Training</th></tr></thead>
       <tbody>
         {% for session in training_sessions %}

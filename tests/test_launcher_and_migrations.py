@@ -4,8 +4,8 @@ import pytest
 
 from release_helpers import make_release_zip, write_install
 from sar_log import launcher
-from sar_log.database import (DatabaseTooNewError, Migration, apply_migrations, connect, initialise,
-                              open_database, read_schema_version)
+from sar_log.database import (MIGRATIONS, DatabaseTooNewError, Migration, apply_migrations, connect,
+                              initialise, latest_schema_version, open_database, read_schema_version)
 from sar_log.updater import installer
 from sar_log.updater.installer import InstallLayout
 from sar_log.updater.versions import Version, read_installed_version
@@ -82,9 +82,12 @@ def test_app_already_running_is_false_when_nothing_listens():
 
 # ---------------------------------------------------------------- migrations
 
-ADD_RADIO_CHANNEL = Migration(2, "add radio channel to job",
+# A hypothetical next release's migration, on top of the real ones.
+NEXT_VERSION = latest_schema_version() + 1
+ADD_RADIO_CHANNEL = Migration(NEXT_VERSION, "add radio channel to job",
                               lambda connection: connection.execute(
                                   "ALTER TABLE job ADD COLUMN radio_channel TEXT NOT NULL DEFAULT ''"))
+WITH_RADIO_CHANNEL = (*MIGRATIONS, ADD_RADIO_CHANNEL)
 
 
 def column_names(connection, table):
@@ -93,20 +96,20 @@ def column_names(connection, table):
 
 def test_new_database_starts_at_latest_version_without_running_migrations(tmp_path):
     connection = connect(tmp_path / "new.sqlite")
-    initialise(connection, migrations=(Migration(2, "would fail", lambda c: 1 / 0),))
-    assert read_schema_version(connection) == 2
+    initialise(connection, migrations=(*MIGRATIONS, Migration(NEXT_VERSION, "would fail", lambda c: 1 / 0)))
+    assert read_schema_version(connection) == NEXT_VERSION
 
 
 def test_existing_database_is_migrated_once(tmp_path):
-    connection = open_database(tmp_path / "old.sqlite")  # version 1, as made by v0.1.0
+    connection = open_database(tmp_path / "old.sqlite")  # made by the current release
     connection.execute("INSERT INTO job (event_number, start_date, created_at, updated_at) "
                        "VALUES ('E1', '2026-01-01', 'now', 'now')")
     connection.commit()
-    initialise(connection, migrations=(ADD_RADIO_CHANNEL,))
-    assert read_schema_version(connection) == 2
+    initialise(connection, migrations=WITH_RADIO_CHANNEL)
+    assert read_schema_version(connection) == NEXT_VERSION
     assert "radio_channel" in column_names(connection, "job")
     assert connection.execute("SELECT event_number FROM job").fetchone()[0] == "E1"
-    assert apply_migrations(connection, (ADD_RADIO_CHANNEL,)) == []
+    assert apply_migrations(connection, WITH_RADIO_CHANNEL) == []
 
 
 def test_failed_migration_leaves_database_at_last_good_version(tmp_path):
@@ -117,13 +120,29 @@ def test_failed_migration_leaves_database_at_last_good_version(tmp_path):
         raise sqlite3.OperationalError("boom")
 
     with pytest.raises(sqlite3.OperationalError):
-        apply_migrations(connection, (Migration(2, "broken", broken),))
-    assert read_schema_version(connection) == 1
+        apply_migrations(connection, (*MIGRATIONS, Migration(NEXT_VERSION, "broken", broken)))
+    assert read_schema_version(connection) == latest_schema_version()
     assert "half_done" not in column_names(connection, "job")
 
 
 def test_older_code_refuses_newer_database(tmp_path):
     connection = connect(tmp_path / "db.sqlite")
-    initialise(connection, migrations=(ADD_RADIO_CHANNEL,))
+    initialise(connection, migrations=WITH_RADIO_CHANNEL)
     with pytest.raises(DatabaseTooNewError, match="restore a backup"):
-        initialise(connection, migrations=())
+        initialise(connection, migrations=MIGRATIONS)
+
+
+def make_version_1_database(path):
+    """A database as v0.1.x/v0.2.x left it: no feedback table, schema version 1."""
+    connection = open_database(path)
+    connection.execute("DROP TABLE feedback")
+    connection.execute("UPDATE schema_info SET value = '1' WHERE key = 'schema_version'")
+    connection.commit()
+    connection.close()
+
+
+def test_version_1_database_gains_feedback_table(tmp_path):
+    make_version_1_database(tmp_path / "v1.sqlite")
+    connection = open_database(tmp_path / "v1.sqlite")
+    assert read_schema_version(connection) == 2
+    assert "message" in column_names(connection, "feedback")

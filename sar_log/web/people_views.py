@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
-from sar_log import jobs, organisations, people, training
+from sar_log import exports, jobs, organisations, people, people_search, training
 from sar_log.errors import ValidationError
 from sar_log.people import PersonInput
-from sar_log.web.helpers import connection, form_optional_int, form_text, query_as_of_date
+from sar_log.people_search import MEMBERSHIP_CHOICES, TRAINING_STATUS_CHOICES, PersonFilter
+from sar_log.web.helpers import (connection, csv_response, form_optional_int, form_text, query_as_of_date,
+                                 query_date)
 
 blueprint = Blueprint("people", __name__)
 
@@ -21,12 +23,38 @@ def person_input_from_form() -> PersonInput:
     )
 
 
+def person_filter_from_query() -> PersonFilter:
+    membership = request.args.get("membership", "active")
+    return PersonFilter(
+        membership=membership if membership in MEMBERSHIP_CHOICES else "active",
+        organisation_id=request.args.get("organisation_id", type=int),
+        text=request.args.get("text", "").strip(),
+        training_type_id=request.args.get("training_type_id", type=int),
+        training_status=request.args.get("training_status", ""),
+        trained_since=query_date("trained_since") or None,
+        not_trained_since=query_date("not_trained_since") or None,
+    )
+
+
 @blueprint.route("/people")
 def list_people_page():
-    show = request.args.get("show", "active")
     as_of = query_as_of_date()
-    person_list = people.list_people(connection(), active_on=as_of if show == "active" else None)
-    return render_template("people_list.html", people=person_list, show=show, as_of=as_of)
+    person_filter = person_filter_from_query()
+    return render_template(
+        "people_list.html", as_of=as_of, person_filter=person_filter,
+        summaries=people_search.search_people(connection(), person_filter, as_of),
+        organisations=organisations.list_organisations(connection()),
+        training_types=training.list_training_types(connection()),
+        membership_choices=MEMBERSHIP_CHOICES, training_status_choices=TRAINING_STATUS_CHOICES,
+    )
+
+
+@blueprint.route("/people.csv")
+def download_people_page():
+    """The people currently shown on the People page, with the same filter."""
+    summaries = people_search.search_people(connection(), person_filter_from_query(), query_as_of_date())
+    return csv_response(exports.people_csv(connection(), [summary.person for summary in summaries]),
+                        "sar_people.csv")
 
 
 def _render_person_form(person=None, person_input=None, error=None):
@@ -68,6 +96,7 @@ def person_detail_page(person_id: int):
     job_history = jobs.list_attendance_for_person(connection(), person_id)
     return render_template(
         "person_detail.html", person=person, job_history=job_history,
+        service_length=person.service_length(query_as_of_date()),
         total_hours=sum(record.hours for _, record in job_history),
         training_sessions=training.list_sessions_for_person(connection(), person_id),
     )

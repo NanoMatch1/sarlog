@@ -4,14 +4,14 @@
 <h1>Qualification matrix <span class="muted">· as of {{ as_of }}</span></h1>
 <p class="muted">Date of each active member's most recent session of each training type.
   <span class="badge current">current</span> <span class="badge expired">expired</span> <span class="badge never">never</span></p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="sortable">
   <thead><tr><th>Name</th>{% for training_type in matrix.training_types %}<th>{{ training_type.name }}</th>{% endfor %}</tr></thead>
   <tbody>
     {% for person in matrix.people %}
       <tr><td><a href="{{ url_for('people.person_detail_page', person_id=person.id) }}">{{ person.full_name }}</a></td>
         {% for training_type in matrix.training_types %}
           {% set cell = matrix.cells[(person.id, training_type.id)] %}
-          <td><span class="badge {{ cell.status }}">{{ cell.last_date or 'never' }}</span></td>
+          <td data-sort-value="{{ cell.last_date or '' }}"><span class="badge {{ cell.status }}">{{ cell.last_date or 'never' }}</span></td>
         {% endfor %}</tr>
     {% endfor %}
   </tbody>

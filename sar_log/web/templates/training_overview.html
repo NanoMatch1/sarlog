@@ -18,7 +18,7 @@
 </form>
 
 <h2>Training gaps <span class="muted small">— active members current in each training type, biggest gaps first</span></h2>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="sortable">
   <thead><tr><th>Training type</th><th class="number">Current</th><th class="number">Expired</th><th class="number">Never</th><th class="number">% current</th><th>Validity</th></tr></thead>
   <tbody>
     {% for gap in gaps %}
@@ -31,13 +31,13 @@
 </table></div>
 
 <h2>Active members <span class="muted small">— {{ lapsed_count }} lapsed (no training in {{ lapse_months }} months; members who joined within that window are not counted)</span></h2>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="sortable">
   <thead><tr><th>Name</th><th>Status</th><th>Last training</th><th class="number">Days since</th><th class="number">Sessions in last {{ period_months }} months</th><th>Contact</th></tr></thead>
   <tbody>
     {% for status in statuses %}
       <tr><td><a href="{{ url_for('people.person_detail_page', person_id=status.person.id) }}">{{ status.person.full_name }}</a></td>
         <td>{% if status.is_lapsed %}<span class="badge lapsed">lapsed</span>{% else %}<span class="badge current">ok</span>{% endif %}</td>
-        <td>{{ status.last_training_date or 'never' }}</td>
+        <td data-sort-value="{{ status.last_training_date or '' }}">{{ status.last_training_date or 'never' }}</td>
         <td class="number">{{ status.days_since_last_training if status.days_since_last_training is not none else '—' }}</td>
         <td class="number">{{ status.sessions_in_period }}</td>
         <td class="small">{{ status.person.email }} {{ status.person.phone }}</td></tr>
